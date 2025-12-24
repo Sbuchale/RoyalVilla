@@ -18,17 +18,34 @@ namespace RoyalVilla_API.Controllers
         {
             _db = db;
         }
-         
+
         [HttpGet]
-        public IEnumerable<Villa> GetVillas()
+        public async Task<ActionResult<IEnumerable<Villa>>> GetVillas()
         {
-            return _db.Villa.ToList();
+            return Ok(await _db.Villa.ToListAsync());
         }
 
-        [HttpGet("{Id:int}")]
-        public string GetVillaById(int id)
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<Villa>> GetVillaById(int id)
         {
-            return "Get Villa:" + id;
+            try
+            {
+                if (id <= 0)
+                {
+                    return BadRequest("villa ID must be greater than 0");
+                }
+                var villa = await _db.Villa.FirstOrDefaultAsync(u => u.Id == id);
+                if (villa==null)
+                {
+                    return NotFound($"villa with ID {id} was not found");
+                }
+                return Ok(villa);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    $" An error occurred while retrieving villa with ID{id};{ex.Message}");
+            }
         }
     }
 }
