@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RoyalVilla_API.Data;
@@ -15,9 +16,11 @@ namespace RoyalVilla_API.Controllers
     {
 
         private readonly ApplicationDbContext _db;
-        public VillaController(ApplicationDbContext db)
+        private readonly IMapper _mapper;
+        public VillaController(ApplicationDbContext db,IMapper mapper)
         {
             _db = db;
+            _mapper = mapper;
         }
 
         [HttpGet]
@@ -59,17 +62,9 @@ namespace RoyalVilla_API.Controllers
                 {
                     return BadRequest("villa data is required");
                 }
+                
+                Villa villa = _mapper.Map<Villa>(villaDTO);
 
-                Villa villa = new()
-                {
-                    Name = villaDTO.Name,
-                    Details = villaDTO.Details,
-                    ImageUrl = villaDTO.ImageUrl,
-                    Occupancy = villaDTO.Occupancy,
-                    Sqft = villaDTO.Sqft,
-                    Rate = villaDTO.Rate,
-                    CreatedDate = DateTime.Now
-                };
                 _db.Add(villa);
                 await _db.SaveChangesAsync();
                 return Ok(villaDTO);
