@@ -17,7 +17,7 @@ namespace RoyalVilla_API.Controllers
 
         private readonly ApplicationDbContext _db;
         private readonly IMapper _mapper;
-        public VillaController(ApplicationDbContext db,IMapper mapper)
+        public VillaController(ApplicationDbContext db, IMapper mapper)
         {
             _db = db;
             _mapper = mapper;
@@ -39,7 +39,7 @@ namespace RoyalVilla_API.Controllers
                     return BadRequest("villa ID must be greater than 0");
                 }
                 var villa = await _db.Villa.FirstOrDefaultAsync(u => u.Id == id);
-                if (villa==null)
+                if (villa == null)
                 {
                     return NotFound($"villa with ID {id} was not found");
                 }
@@ -62,12 +62,12 @@ namespace RoyalVilla_API.Controllers
                 {
                     return BadRequest("villa data is required");
                 }
-                
+
                 Villa villa = _mapper.Map<Villa>(villaDTO);
 
                 _db.Add(villa);
                 await _db.SaveChangesAsync();
-                return CreatedAtAction(nameof(CreateVilla), new {id=villa.Id},villa);
+                return CreatedAtAction(nameof(CreateVilla), new { id = villa.Id }, villa);
             }
             catch (Exception ex)
             {
@@ -77,7 +77,7 @@ namespace RoyalVilla_API.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<Villa>> UpdateVilla(int id,villaUpdateDTO villaDTO)
+        public async Task<ActionResult<Villa>> UpdateVilla(int id, villaUpdateDTO villaDTO)
         {
             try
             {
@@ -90,19 +90,25 @@ namespace RoyalVilla_API.Controllers
                     return BadRequest("Villa Id in URL does not match villa ID in request body");
                 }
 
-                var existingVilla = await _db.Villa.FirstOrDefaultAsync(u=>u.Id==id);
+                var existingVilla = await _db.Villa.FirstOrDefaultAsync(u => u.Id == id);
                 if (existingVilla == null)
                 {
                     return NotFound($"villa with ID {id} was not found");
                 }
 
-                _mapper.Map(villaDTO,existingVilla);
+                var duplicateVilla = await _db.Villa.FirstOrDefaultAsync(u => u.Name.ToLower() == villaDTO.Name.ToLower() && u.Id != id);
+                if (duplicateVilla != null)
+                {
+                    return Conflict($"A villa with the name '{villaDTO.Name}' already exists");
+                }
+
+                _mapper.Map(villaDTO, existingVilla);
                 existingVilla.UpdatedDate = DateTime.Now;
-                
+
                 await _db.SaveChangesAsync();
 
                 return Ok(villaDTO);
-        
+
             }
             catch (Exception ex)
             {
